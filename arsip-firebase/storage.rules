@@ -1,0 +1,29 @@
+rules_version = '2';
+// Monitoring Copart BSD: Storage rules.
+// Membaca data peran dari Firestore members/{email}.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function memberPath() {
+      return /databases/(default)/documents/members/$(request.auth.token.email.lower());
+    }
+    function isMember() {
+      return request.auth != null && request.auth.token.email != null
+        && firestore.exists(memberPath());
+    }
+    function canEdit() {
+      return isMember() && firestore.get(memberPath()).data.role in ['admin', 'editor'];
+    }
+
+    match /copart/{copartId}/{fileName} {
+      allow read: if isMember();
+      allow create: if canEdit()
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/(jpeg|png|webp)|video/(mp4|webm)');
+      allow delete: if canEdit();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
