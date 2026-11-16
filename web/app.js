@@ -12,6 +12,9 @@ const DOC_TYPES=[
 ];
 const ACCEPT={"application/pdf":"PDF","image/jpeg":"JPG","image/png":"PNG","image/webp":"WEBP","video/mp4":"MP4","video/webm":"WEBM"};
 function driveId(u){try{const x=new URL(u);if(!/(^|\.)google\.com$/.test(x.hostname))return null;const m=x.pathname.match(/\/d\/([\w-]{10,})/);return m?m[1]:x.searchParams.get("id")}catch(e){return null}}
+function cleanProgram(v){return String(v||"").replace(/\s+/g," ").trim()}
+function canonProgram(v,pool){const t=cleanProgram(v);if(!t)return"";const k=t.toLowerCase();return pool.find(p=>cleanProgram(p).toLowerCase()===k)||t}
+function programPool(){return[...PROGRAMS,...S.rows.map(r=>r.program).filter(Boolean)]}
 const EXT_TYPE={pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",mp4:"video/mp4",webm:"video/webm"};
 const $=s=>document.querySelector(s);
 const SVGNS="http://www.w3.org/2000/svg";
@@ -292,7 +295,7 @@ function renderSheet(focusId){
   const numParse=v=>v===""?null:Number(String(v).replace(",","."));
 
   const nama=el("input",{type:"text",id:"inNama",value:draft.nama,required:true,disabled:ro,placeholder:"Contoh: PT Maju Bersama",oninput:bind("nama")});
-  const prog=el("input",{type:"text",id:"inProgram",value:draft.program,list:"progList",disabled:ro,placeholder:"QMS, EMS, HRMP…",oninput:bind("program",v=>v.trim())});
+  const prog=el("input",{type:"text",id:"inProgram",value:draft.program,list:"progList",disabled:ro,placeholder:"QMS, EMS, HRMP…",oninput:bind("program",v=>v.trim()),onchange:e=>{const c=canonProgram(e.target.value,programPool());e.target.value=c;draft.program=c}});
   const progList=el("datalist",{id:"progList"},[...new Set([...PROGRAMS,...S.rows.map(r=>r.program).filter(Boolean)])].map(p=>el("option",{value:p})));
   const pm=el("input",{type:"text",id:"inPm",value:draft.pm||"",disabled:ro,placeholder:"Project manager",oninput:bind("pm")});
   const pic=el("input",{type:"text",id:"inPic",value:draft.pic||"",disabled:ro,placeholder:"Konsultan / PIC",oninput:bind("pic")});
@@ -495,7 +498,7 @@ async function save(){
   if(draft.mulai&&draft.selesai&&draft.mulai>draft.selesai){err.textContent="Tanggal selesai tidak boleh sebelum tanggal mulai.";return}
   if(!col)return;
   busy=true;const btn=$("#saveBtn");if(btn){btn.disabled=true;btn.textContent="Menyimpan…"}
-  const body=clone(draft);body.nama=body.nama.trim();body.diubah=new Date().toISOString();if(!S.editing)body.dibuat=body.diubah;
+  const body=clone(draft);body.nama=body.nama.trim();body.program=canonProgram(body.program,programPool());body.diubah=new Date().toISOString();if(!S.editing)body.dibuat=body.diubah;
   const prev=S.editing?S.rows.find(r=>r.id===S.editing):null;
   body.riwayat=prev&&Array.isArray(prev.riwayat)?prev.riwayat:[];
   body.realisasiRp=latestTotal(body.riwayat);
@@ -529,7 +532,12 @@ function mapErr(e){const c=e&&(e.code||e.statusCode||e.status);const m=(e&&e.mes
   if(/mime type|invalid_mime/i.test(m))return{code:"unsupported_type",message:m};
   return{code:"upstream_error",message:m}}
 const SB={client:null,user:null,member:null};
-function rowsToState(rows){return rows.map(r=>Object.assign({},r.data||{},{id:r.id}))}
+function rowsToState(rows){
+  const out=rows.map(r=>Object.assign({},r.data||{},{id:r.id}));
+  const pool=[...PROGRAMS];
+  out.forEach(r=>{if(!r.program)return;const c=canonProgram(r.program,pool);if(!pool.some(p=>p.toLowerCase()===c.toLowerCase()))pool.push(c);r.program=c});
+  return out;
+}
 function makeCol(){
   const t=()=>SB.client.from("copart");
   const clean=b=>{const o=Object.assign({},b);delete o.id;return o};
