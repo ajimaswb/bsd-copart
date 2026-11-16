@@ -172,7 +172,7 @@ function renderProg(){
   const items=Object.keys(by).map(p=>{const rs=by[p];let v;if(S.progMetric==="capai"){const w=rs.filter(r=>num(r.targetRp)>0);v=w.length?sumBy(w,"realisasiRp")/sumBy(w,"targetRp")*100:null}else v=avg(rs.map(r=>num(r.kepuasan)));return{p,v,n:rs.length}}).filter(it=>it.v!=null).sort((a,b)=>b.n-a.n||a.p.localeCompare(b.p)).slice(0,7);
   if(!items.length){card.replaceChildren(head,el("p",{class:"empty-mini",text:S.progMetric==="capai"?"Belum ada program dengan target dan pencapaian.":"Belum ada hasil survei kepuasan."}));return}
   const max=Math.max(100,...items.map(i=>i.v));const best=items.reduce((a,b)=>b.v>a.v?b:a);
-  const top=best?best.v:null;const isHi=it=>sel?it.p===sel:it.v===top;
+  const top=best?best.v:null;const isHi=()=>true;
   const subText=sel?"Menampilkan "+sel+". Klik batangnya lagi untuk kembali ke semua program.":(S.progMetric==="capai"?"Total tercapai dibanding target yang dijanjikan tiap program. Klik batang untuk melihat satu program.":"Rata-rata survei kepuasan tiap program. Klik batang untuk melihat satu program.");
   card.replaceChildren(head,el("p",{class:"sub",style:"margin:0",text:subText}),
     el("div",{class:"bars"},items.map(it=>el("button",{type:"button",class:"bar"+(isHi(it)?" hi":""),"aria-pressed":String(it.p===sel),title:it.p===sel?"Klik untuk kembali ke semua program":it.p+": "+fmtPct(it.v)+"% · "+it.n+" copart",onclick:()=>{S.fProgram=S.fProgram===it.p?"":it.p;renderAll()}},
@@ -256,14 +256,13 @@ function renderTable(){
       el("td",null,r.selesai?[fmtDate(r.selesai),el("span",{class:"date-sub"+(st==="late"?" late":""),text:dueNote(r)})]:el("span",{class:"dash",text:"–"})),
       el("td",null,el("span",{class:"pill "+st,text:pillText(r)})),
       el("td",null,meter(num(r.kepuasan),"sat")),
-      el("td",null,meter(capai(r),"target"),el("span",{class:"money",text:money(r)})),
-      el("td",null,docChips(r)));
+      el("td",null,meter(capai(r),"target"),el("span",{class:"money",text:money(r)})));
   }));
   cards.replaceChildren(...rows.map(r=>{
     const st=status(r);
     return el("li",null,el("button",{class:"rcard",type:"button",onclick:()=>openSheet(r.id)},
       el("div",{class:"t"},el("div",null,el("b",{text:r.nama}),el("span",{text:[people(r),r.selesai&&("Jadwal "+fmtDate(r.selesai))].filter(Boolean).join(" · ")||"Jadwal selesai belum diisi"}))),
-      el("div",{class:"tags"},r.program?el("span",{class:"chip",text:r.program}):null,el("span",{class:"pill "+st,text:pillText(r)}),el("span",{class:"sub"+(st==="late"?" late":""),text:dueNote(r)}),docChips(r)),
+      el("div",{class:"tags"},r.program?el("span",{class:"chip",text:r.program}):null,el("span",{class:"pill "+st,text:pillText(r)}),el("span",{class:"sub"+(st==="late"?" late":""),text:dueNote(r)})),
       el("div",{class:"m"},el("span",{text:"Omzet"}),el("b",{class:"omzet",text:num(r.omzetRp)!=null?fmtRp(r.omzetRp):"–"}),el("span",{text:"Kepuasan"}),meter(num(r.kepuasan),"sat"),el("span",{text:"Tercapai"}),el("div",null,meter(capai(r),"target"),el("span",{class:"money",text:money(r)})))));
   }));
 }
