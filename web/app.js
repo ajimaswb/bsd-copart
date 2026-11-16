@@ -113,8 +113,7 @@ function renderKpis(){
     card("Survei kepuasan",()=>goList({sort:{k:"kepuasan",d:-1}}),sat==null?"–":fmtPct(sat),sat==null?"":"%",el("span",{class:"delta "+(sat==null?"flat":sat>=85?"":"down"),text:sat==null?"Belum ada survei":sat>=85?"Di atas 85%":"Di bawah 85%"}),spark(surveyed.slice(-12).map(r=>r.kepuasan),Math.min(surveyed.length,12)-1),"Rata-rata dari "+surveyed.length+" survei"),
     card("Nilai tercapai",()=>goList({sort:{k:"target",d:-1}}),withT.length?fmtRp(sumA):"–","",el("span",{class:"delta "+(growth>0?"":"flat"),text:growth>0?"+"+fmtRp(growth).replace("Rp ","")+" bulan ini":"Rp 0 bulan ini"}),
       el("div",{class:"gauge","aria-hidden":"true"},el("div",{class:"t"},el("b",{style:"width:"+(sumT?Math.min(100,sumA/sumT*100):0)+"%"})),el("span",{text:sumT?fmtPct(sumA/sumT*100)+"% dijanjikan":"–"})),
-      withT.length?"Dari target dijanjikan "+fmtRp(sumT)+" · "+hit+"/"+withT.length+" copart tercapai":"Belum ada target yang dijanjikan"),
-    card("Dokumen lengkap",()=>{S.tab="docs";renderFollow();$("#tindak").scrollIntoView()},done.length?String(docOk):"–",done.length?"/ "+done.length:"",el("span",{class:"delta "+(done.length&&docOk<done.length?"down":"flat"),text:done.length?(done.length-docOk)+" belum lengkap":"Belum ada program selesai"}),tri,"Program selesai dengan QA, AL, dan TS")
+      withT.length?"Dari target dijanjikan "+fmtRp(sumT)+" · "+hit+"/"+withT.length+" copart tercapai":"Belum ada target yang dijanjikan")
   );
 }
 
